@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.AppHost", "BKMusic.AppHost\BKMusic.AppHost.csproj", "{D37F9287-E5C0-4AED-837C-0E06D1F67583}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.ServiceDefaults", "BKMusic.ServiceDefaults\BKMusic.ServiceDefaults.csproj", "{3C2BFC1F-CD2A-A213-EBC8-FF22541139D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.ApiService", "BKMusic.ApiService\BKMusic.ApiService.csproj", "{D0C65E82-69ED-EA71-73F4-E383AEDA4834}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.Web", "BKMusic.Web\BKMusic.Web.csproj", "{332DF7CE-B5E9-EAFC-32F3-3247C104C547}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D37F9287-E5C0-4AED-837C-0E06D1F67583}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D37F9287-E5C0-4AED-837C-0E06D1F67583}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D37F9287-E5C0-4AED-837C-0E06D1F67583}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D37F9287-E5C0-4AED-837C-0E06D1F67583}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C2BFC1F-CD2A-A213-EBC8-FF22541139D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C2BFC1F-CD2A-A213-EBC8-FF22541139D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C2BFC1F-CD2A-A213-EBC8-FF22541139D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C2BFC1F-CD2A-A213-EBC8-FF22541139D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0C65E82-69ED-EA71-73F4-E383AEDA4834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0C65E82-69ED-EA71-73F4-E383AEDA4834}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0C65E82-69ED-EA71-73F4-E383AEDA4834}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0C65E82-69ED-EA71-73F4-E383AEDA4834}.Release|Any CPU.Build.0 = Release|Any CPU
+		{332DF7CE-B5E9-EAFC-32F3-3247C104C547}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{332DF7CE-B5E9-EAFC-32F3-3247C104C547}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{332DF7CE-B5E9-EAFC-32F3-3247C104C547}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{332DF7CE-B5E9-EAFC-32F3-3247C104C547}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A69257B9-DB1B-4B5A-AC0F-723A8A61408F}
+	EndGlobalSection
+EndGlobal
