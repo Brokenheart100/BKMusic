@@ -1,0 +1,148 @@
+import 'dart:io';
+import 'package:audio_service/audio_service.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
+import 'package:logger/logger.dart';
+import 'package:music_app/core/db/objectbox_manager.dart';
+import 'package:music_app/core/services/audio_handler.dart';
+import 'package:music_app/features/auth/data/datasources/auth_api.dart';
+import 'package:music_app/features/home/data/datasources/music_api.dart';
+import 'package:music_app/features/library/data/datasources/playlist_api.dart';
+import 'package:music_app/features/search/data/datasources/search_api.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+@module
+abstract class RegisterModule {
+  @singleton
+  Logger get logger => Logger(
+        filter: kReleaseMode ? ProductionFilter() : DevelopmentFilter(),
+        printer: PrettyPrinter(
+          methodCount: kReleaseMode ? 0 : 2,
+          errorMethodCount: 8,
+          lineLength: 120,
+          colors: !kReleaseMode,
+          printEmojis: true,
+        ),
+        output: ConsoleOutput(),
+      );
+
+  @singleton
+  AuthApi get authApi => AuthApi(dio);
+
+  @singleton
+  Dio get dio {
+    // 为了在模块内部打印日志，我们这里临时实例化一个 Logger
+    // (因为 dio 是 getter，不好直接注入 Logger 单例)
+    final log = Logger(printer: PrettyPrinter(methodCount: 0));
+
+    log.d("🛠️ [Dio] 开始构建网络客户端...");
+
+    // 1. 动态判断 Gateway 地址
+    const gatewayPort = '7101';
+    String baseUrl;
+
+    if (kIsWeb) {
+      baseUrl = 'https://localhost:$gatewayPort/api';
+      log.i("🌍 [Dio] 检测到 Web 环境，BaseURL: $baseUrl");
+    } else if (!kIsWeb && Platform.isAndroid) {
+      baseUrl = 'https://10.0.2.2:$gatewayPort/api';
+      log.i("🤖 [Dio] 检测到 Android 环境，使用宿主 IP: $baseUrl");
+    } else {
+      baseUrl = 'https://localhost:$gatewayPort/api';
+      log.i("💻 [Dio] 检测到 桌面/iOS 环境，BaseURL: $baseUrl");
+    }
+
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // 2. SSL 证书绕过 (仅开发环境)
+    if (!kIsWeb) {
+      (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        client.badCertificateCallback = (cert, host, port) => true;
+        return client;
+      };
+      log.w("🔓 [Dio] 开发环境：已禁用 SSL 证书验证 (BadCertificateCallback)");
+    }
+
+    // 3. 【增强版】Emoji 日志拦截器
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        // 请求日志
+        log.i("🚀 📤 [REQUEST] ${options.method} ${options.uri}\n"
+            "📦 Headers: ${options.headers}\n"
+            "📝 Data: ${options.data ?? 'None'}");
+        return handler.next(options);
+      },
+      onResponse: (response, handler) {
+        // 响应日志
+        log.d(
+            "💎 📥 [RESPONSE] [${response.statusCode}] ${response.requestOptions.uri}\n"
+            "📦 Data: ${response.data}");
+        return handler.next(response);
+      },
+      onError: (DioException e, handler) {
+        // 错误日志
+        log.e(
+            "🔥 💀 [ERROR] [${e.response?.statusCode}] ${e.requestOptions.uri}\n"
+            "❌ Type: ${e.type}\n"
+            "📄 Message: ${e.message}\n"
+            "🐛 Response: ${e.response?.data}");
+        return handler.next(e);
+      },
+    ));
+
+    log.d("✅ [Dio] 网络客户端构建完成！");
+    return dio;
+  }
+
+  @singleton
+  SearchApi get searchApi => SearchApi(dio);
+
+  @singleton
+  PlaylistApi get playlistApi => PlaylistApi(dio);
+
+  @singleton
+  @preResolve
+  Future<SharedPreferences> get prefs async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs;
+  }
+
+  @singleton
+  MusicApi get musicApi => MusicApi(dio);
+
+  @singleton
+  @preResolve
+  Future<MusicHandler> get musicHandler async {
+    final log = Logger(printer: PrettyPrinter(methodCount: 0));
+    log.d("🎧 [Audio] 正在启动音频后台服务...");
+
+    final handler = await AudioService.init(
+      builder: () => MusicHandlerImpl(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.company.music_app.channel.audio',
+        androidNotificationChannelName: 'Music Playback',
+        androidNotificationOngoing: true,
+      ),
+    );
+
+    log.i("✅ [Audio] 音频服务启动就绪！");
+    return handler;
+  }
+
+  @singleton
+  @preResolve
+  Future<ObjectBoxManager> get objectBoxManager => ObjectBoxManager.create();
+}

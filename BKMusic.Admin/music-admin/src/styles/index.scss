@@ -1,0 +1,36 @@
+/* Reset CSS (简化版) */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #f0f2f5; // 统一背景色
+    color: #303133;
+}
+
+
+#app {
+    height: 100%;
+}
+
+/* NProgress 颜色覆盖 (适配 Element Primary Color) */
+#nprogress .bar {
+    background: #409eff !important;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c0c4cc;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}

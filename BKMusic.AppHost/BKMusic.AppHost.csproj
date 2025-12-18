@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
 
@@ -11,13 +11,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BKMusic.ApiService\BKMusic.ApiService.csproj" />
-    <ProjectReference Include="..\BKMusic.Web\BKMusic.Web.csproj" />
+    <ProjectReference Include="..\BKMusic.Admin\BKMusic.Admin.Server\BKMusic.Admin.Server.csproj" />
+    <ProjectReference Include="..\BKMusic.CatalogService\BKMusic.CatalogService.csproj" />
+    <ProjectReference Include="..\BKMusic.Gateway\BKMusic.Gateway.csproj" />
+    <ProjectReference Include="..\BKMusic.IdentityService\BKMusic.IdentityService.csproj" />
+    <ProjectReference Include="..\BKMusic.MediaService\BKMusic.MediaService.csproj" />
+    <ProjectReference Include="..\BKMusic.SearchService\BKMusic.SearchService.csproj" />
+    <ProjectReference Include="..\BKMusic.TranscodingWorker\BKMusic.TranscodingWorker.csproj" />
+    <ProjectReference Include="..\Test1\Test1.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.1" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="9.5.1" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.Yarp" Version="13.0.2" />
   </ItemGroup>
 
 </Project>

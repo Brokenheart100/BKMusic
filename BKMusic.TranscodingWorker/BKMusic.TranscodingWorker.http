@@ -1,0 +1,6 @@
+@BKMusic.TranscodingWorker_HostAddress = http://localhost:5278
+
+GET {{BKMusic.TranscodingWorker_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

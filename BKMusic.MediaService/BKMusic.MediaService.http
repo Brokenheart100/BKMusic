@@ -1,0 +1,6 @@
+@BKMusic.MediaService_HostAddress = http://localhost:5123
+
+GET {{BKMusic.MediaService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
