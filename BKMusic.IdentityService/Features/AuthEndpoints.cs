@@ -18,6 +18,7 @@ public static class AuthEndpoints
         group.MapPost("/register", Register);
         group.MapPost("/login", Login);
         group.MapPost("/refresh", Refresh);
+        
     }
 
     // DTOs

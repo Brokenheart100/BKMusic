@@ -28,7 +28,7 @@ var typesense = builder.AddContainer("typesense", "typesense/typesense:29.0")
 
 // --- PostgreSQL ---
 var postgres = builder.AddPostgres("postgres")
-    //.WithEndpoint(port: 54323, targetPort: 5432, name: "datagrip", isExternal:true)
+    //.WithEndpoint(port: 55000, targetPort: 5432, name: "datagrip", isExternal:true,scheme:"http")
     .WithDataVolume("pgsql_data")
     .WithPgAdmin();
 
@@ -52,13 +52,17 @@ var minio = builder.AddContainer("minio", "minio/minio")
 // 2. 微服务层 (Microservices)
 // ==========================================
 
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKey1234567890_MustBeLongEnough";
+var jwtIssuer = "BKMusic_Identity";
+var jwtAudience = "BKMusic_Client";
+
 // --- Identity Service ---
 var identitySvc = builder.AddProject<Projects.BKMusic_IdentityService>("identity-svc")
     .WithReference(identityDb)
     .WithReference(rabbitmq)
-    .WithEnvironment("Jwt__Key", "SuperSecretKey1234567890_MustBeLongEnough")
-    .WithEnvironment("Jwt__Issuer", "BKMusic_Identity")
-    .WithEnvironment("Jwt__Audience", "BKMusic_Client")
+    .WithEnvironment("Jwt__Key", jwtKey)
+    .WithEnvironment("Jwt__Issuer", jwtIssuer)
+    .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(rabbitmq)    // 等待 MQ
     .WaitFor(identityDb); // 等待 DB
 
@@ -71,6 +75,9 @@ var mediaSvc = builder.AddProject<Projects.BKMusic_MediaService>("media-svc")
     .WithReference(rabbitmq)
     .WithReference(minioApiEndpoint)
     .WithEnvironment("ConnectionStrings:minio", minioApiEndpoint)
+    .WithEnvironment("Jwt__Key", jwtKey)
+    .WithEnvironment("Jwt__Issuer", jwtIssuer)
+    .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(rabbitmq)
     .WaitFor(mediaDb);
 
@@ -80,6 +87,9 @@ var catalogSvc = builder.AddProject<Projects.BKMusic_CatalogService>("catalog-sv
     .WithReference(rabbitmq)
     .WithReference(redis)
     .WithEnvironment("MinIO__PublicHost", "http://localhost:9000")
+    .WithEnvironment("Jwt__Key", jwtKey)
+    .WithEnvironment("Jwt__Issuer", jwtIssuer)
+    .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(rabbitmq)
     .WaitFor(catalogDb)
     .WaitFor(redis);

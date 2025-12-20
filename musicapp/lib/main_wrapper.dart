@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:music_app/core/router/app_router.dart';
+import 'package:music_app/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:music_app/features/music_player/presentation/providers/player_providers.dart';
 import 'package:music_app/features/music_player/presentation/widgets/mini_player.dart';
 
@@ -17,6 +18,16 @@ class MainWrapper extends ConsumerStatefulWidget {
 
 class _MainWrapperState extends ConsumerState<MainWrapper> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 【核心】加载收藏 ID 列表
+    // 使用 addPostFrameCallback 确保在构建完成后执行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(favoriteIdsProvider.notifier).loadIds();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +149,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
 
   Widget _buildMenuItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         setState(() => _selectedIndex = index);
@@ -152,12 +164,10 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             // context.go(Routes.trending);
             break;
           case 2:
-            // 【这里！】点击 Library 跳转
             context.go(Routes.library);
             break;
           case 3:
-            // Favorites
-            // context.go(Routes.favorites);
+            context.go(Routes.favorites);
             break;
         }
       },
@@ -166,16 +176,14 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).primaryColor.withValues(alpha: 0.15)
+              ? colorScheme.primary.withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             Icon(icon,
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.white54,
+                color: isSelected ? colorScheme.primary : Colors.white54,
                 size: 22),
             const SizedBox(width: 16),
             Text(

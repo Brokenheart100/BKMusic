@@ -18,10 +18,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.IdentityService", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.Gateway", "BKMusic.Gateway\BKMusic.Gateway.csproj", "{C8567C57-E7A8-6C57-4D97-EBFDDF7AF5A7}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "bkmusic.admin.client", "BKMusic.Admin\bkmusic.admin.client\bkmusic.admin.client.esproj", "{E7DCB00C-493B-3A6C-F151-E7FF79A89760}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.Admin.Server", "BKMusic.Admin\BKMusic.Admin.Server\BKMusic.Admin.Server.csproj", "{0C76FA66-CF50-E1D8-E50E-0E83757C4381}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test1", "Test1\Test1.csproj", "{4A034DFE-FD31-D859-34CF-311B54F2A02C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BKMusic.SearchService", "BKMusic.SearchService\BKMusic.SearchService.csproj", "{2693CB0B-4136-BF34-86A4-6CF51EFA928F}"
@@ -64,14 +60,6 @@ Global
 		{C8567C57-E7A8-6C57-4D97-EBFDDF7AF5A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8567C57-E7A8-6C57-4D97-EBFDDF7AF5A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8567C57-E7A8-6C57-4D97-EBFDDF7AF5A7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7DCB00C-493B-3A6C-F151-E7FF79A89760}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7DCB00C-493B-3A6C-F151-E7FF79A89760}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7DCB00C-493B-3A6C-F151-E7FF79A89760}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7DCB00C-493B-3A6C-F151-E7FF79A89760}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C76FA66-CF50-E1D8-E50E-0E83757C4381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C76FA66-CF50-E1D8-E50E-0E83757C4381}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C76FA66-CF50-E1D8-E50E-0E83757C4381}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C76FA66-CF50-E1D8-E50E-0E83757C4381}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4A034DFE-FD31-D859-34CF-311B54F2A02C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4A034DFE-FD31-D859-34CF-311B54F2A02C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A034DFE-FD31-D859-34CF-311B54F2A02C}.Release|Any CPU.ActiveCfg = Release|Any CPU

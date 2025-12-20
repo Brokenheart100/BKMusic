@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:music_app/core/router/app_router.dart';
+import 'package:music_app/features/favorites/presentation/widgets/like_button.dart';
 import 'package:music_app/features/music_player/presentation/providers/player_providers.dart';
 import 'package:music_app/features/music_player/presentation/widgets/album_art.dart';
 import 'package:music_app/features/music_player/presentation/widgets/play_pause_button.dart';
@@ -21,6 +22,7 @@ class MiniPlayer extends ConsumerWidget {
         final artist = hasSong ? (song.artist ?? "Unknown") : "Ready to Play";
         final artUrl = hasSong ? song.artUri?.toString() : null;
         final heroTag = artUrl ?? 'default_art_tag';
+        final songId = song?.extras?['songId'] as String?;
 
         return GestureDetector(
           onTap: hasSong ? () => context.push(Routes.player) : null,
@@ -67,7 +69,6 @@ class MiniPlayer extends ConsumerWidget {
                       Text(
                         artist,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          // 【修改】API 更新
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.6),
                         ),
@@ -84,6 +85,10 @@ class MiniPlayer extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (hasSong && songId != null) ...[
+                          LikeButton(songId: songId, size: 24),
+                          const SizedBox(width: 16),
+                        ],
                         IconButton(
                           icon: const Icon(Icons.skip_previous_rounded),
                           color: Colors.white,

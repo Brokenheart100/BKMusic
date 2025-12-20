@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:music_app/features/favorites/presentation/widgets/like_button.dart';
 import 'package:music_app/features/music_player/presentation/providers/player_providers.dart';
 import 'package:music_app/features/music_player/presentation/widgets/album_art.dart';
 import 'package:music_app/features/music_player/presentation/widgets/player_controls.dart';
@@ -44,6 +45,7 @@ class PlayerScreen extends ConsumerWidget {
         data: (song) {
           if (song == null) return const Center(child: Text("No song playing"));
           final artUrl = song.artUri?.toString();
+          final songId = song.extras?['songId'] as String?;
 
           return Stack(
             children: [
@@ -69,6 +71,7 @@ class PlayerScreen extends ConsumerWidget {
                         horizontal: isDesktop ? 80 : 32, vertical: 40),
                     child: isDesktop
                         ? _DesktopLayout(
+                            songId: songId,
                             songTitle: song.title,
                             artist: song.artist,
                             artUrl: artUrl)
@@ -94,8 +97,10 @@ class _DesktopLayout extends StatelessWidget {
   final String songTitle;
   final String? artist;
   final String? artUrl;
+  final String? songId;
 
-  const _DesktopLayout({required this.songTitle, this.artist, this.artUrl});
+  const _DesktopLayout(
+      {required this.songTitle, this.artist, this.artUrl, this.songId});
 
   @override
   Widget build(BuildContext context) {
@@ -120,16 +125,22 @@ class _DesktopLayout extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                songTitle,
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      // 用更大的字体
-                      fontWeight: FontWeight.w800, // 更粗
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(songTitle,
+                        style: Theme.of(context)
+                            .textTheme
+                            .displaySmall
+                            ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                  if (songId != null) LikeButton(songId: songId!, size: 32),
+                ],
               ),
               const SizedBox(height: 8),
               Text(artist ?? "",

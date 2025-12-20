@@ -210,6 +210,7 @@ class HomeScreen extends ConsumerWidget {
       artist: song.artist,
       album: song.album,
       artUri: song.coverUrl != null ? Uri.parse(song.coverUrl!) : null,
+      extras: {'songId': song.id},
     ));
   }
 }
@@ -247,7 +248,10 @@ class _HeroBanner extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.7)
+                ],
               ),
             ),
           ),
@@ -362,7 +366,8 @@ class _HorizontalCardState extends State<_HorizontalCard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12)),
             ],
           ),
         ),
@@ -399,7 +404,7 @@ class _VerticalListTileState extends State<_VerticalListTile> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isHover
-                ? Colors.white.withOpacity(0.1)
+                ? Colors.white.withValues(alpha: 0.05)
                 : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
           ),
@@ -407,7 +412,7 @@ class _VerticalListTileState extends State<_VerticalListTile> {
             children: [
               Text("#${widget.index}",
                   style: TextStyle(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       fontWeight: FontWeight.bold)),
               const SizedBox(width: 16),
               ClipRRect(
@@ -430,20 +435,21 @@ class _VerticalListTileState extends State<_VerticalListTile> {
                     Text(widget.song.artist,
                         style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.5))),
+                            color: Colors.white.withValues(alpha: 0.7))),
                   ],
                 ),
               ),
               Text("3:45",
                   style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.3))), // 临时时长
+                      color: Colors.white.withValues(alpha: 0.3))), // 临时时长
               const SizedBox(width: 16),
               if (isHover)
                 Icon(Icons.play_circle_fill,
                     color: Theme.of(context).primaryColor, size: 32)
               else
-                Icon(Icons.more_horiz, color: Colors.white.withOpacity(0.3)),
+                Icon(Icons.more_horiz,
+                    color: Colors.white.withValues(alpha: 0.3)),
             ],
           ),
         ),

@@ -6,10 +6,13 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:music_app/core/db/objectbox_manager.dart';
+import 'package:music_app/core/network/dio_interceptor.dart'; // 【新增】引入拦截器
 import 'package:music_app/core/services/audio_handler.dart';
 import 'package:music_app/features/auth/data/datasources/auth_api.dart';
+import 'package:music_app/features/favorites/data/datasources/favorites_api.dart';
 import 'package:music_app/features/home/data/datasources/music_api.dart';
 import 'package:music_app/features/library/data/datasources/playlist_api.dart';
+import 'package:music_app/features/music_player/data/datasources/media_api.dart';
 import 'package:music_app/features/search/data/datasources/search_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,15 +31,11 @@ abstract class RegisterModule {
         output: ConsoleOutput(),
       );
 
+  // 【核心修改】改为方法，接收 AuthInterceptor 参数
   @singleton
-  AuthApi get authApi => AuthApi(dio);
-
-  @singleton
-  Dio get dio {
-    // 为了在模块内部打印日志，我们这里临时实例化一个 Logger
-    // (因为 dio 是 getter，不好直接注入 Logger 单例)
+  Dio dio(AuthInterceptor authInterceptor) {
+    // 临时 Logger 用于打印初始化日志
     final log = Logger(printer: PrettyPrinter(methodCount: 0));
-
     log.d("🛠️ [Dio] 开始构建网络客户端...");
 
     // 1. 动态判断 Gateway 地址
@@ -73,27 +72,29 @@ abstract class RegisterModule {
         client.badCertificateCallback = (cert, host, port) => true;
         return client;
       };
-      log.w("🔓 [Dio] 开发环境：已禁用 SSL 证书验证 (BadCertificateCallback)");
+      log.w("🔓 [Dio] 开发环境：已禁用 SSL 证书验证");
     }
 
-    // 3. 【增强版】Emoji 日志拦截器
+    // 3. 【核心】添加 AuthInterceptor
+    // 必须加在日志拦截器之前，这样日志才能打印出 Authorization 头
+    dio.interceptors.add(authInterceptor);
+    log.i("🛡️ [Dio] AuthInterceptor 已注入");
+
+    // 4. 添加 Emoji 日志拦截器
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        // 请求日志
         log.i("🚀 📤 [REQUEST] ${options.method} ${options.uri}\n"
             "📦 Headers: ${options.headers}\n"
             "📝 Data: ${options.data ?? 'None'}");
         return handler.next(options);
       },
       onResponse: (response, handler) {
-        // 响应日志
         log.d(
             "💎 📥 [RESPONSE] [${response.statusCode}] ${response.requestOptions.uri}\n"
             "📦 Data: ${response.data}");
         return handler.next(response);
       },
       onError: (DioException e, handler) {
-        // 错误日志
         log.e(
             "🔥 💀 [ERROR] [${e.response?.statusCode}] ${e.requestOptions.uri}\n"
             "❌ Type: ${e.type}\n"
@@ -108,10 +109,22 @@ abstract class RegisterModule {
   }
 
   @singleton
-  SearchApi get searchApi => SearchApi(dio);
+  FavoritesApi favoritesApi(Dio dio) => FavoritesApi(dio);
 
   @singleton
-  PlaylistApi get playlistApi => PlaylistApi(dio);
+  AuthApi authApi(Dio dio) => AuthApi(dio);
+
+  @singleton
+  SearchApi searchApi(Dio dio) => SearchApi(dio);
+
+  @singleton
+  PlaylistApi playlistApi(Dio dio) => PlaylistApi(dio);
+
+  @singleton
+  MediaApi mediaApi(Dio dio) => MediaApi(dio);
+
+  @singleton
+  MusicApi musicApi(Dio dio) => MusicApi(dio);
 
   @singleton
   @preResolve
@@ -119,9 +132,6 @@ abstract class RegisterModule {
     final prefs = await SharedPreferences.getInstance();
     return prefs;
   }
-
-  @singleton
-  MusicApi get musicApi => MusicApi(dio);
 
   @singleton
   @preResolve

@@ -1,5 +1,9 @@
+ï»¿using System.Text;
 using BKMusic.CatalogService.Data;
 using BKMusic.CatalogService.Features;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Wolverine;
 using Wolverine.RabbitMQ;
@@ -8,10 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// 1. Êı¾İ¿â
+// 1. æ•°æ®åº“
 builder.AddNpgsqlDbContext<CatalogDbContext>("catalog-db");
 
-// 2. Redis »º´æ (Aspire)
+// 2. Redis ç¼“å­˜ (Aspire)
 builder.AddRedisOutputCache("cache");
 
 // 3. Wolverine (RabbitMQ)
@@ -22,25 +26,51 @@ builder.Host.UseWolverine(opts =>
         .AutoProvision()
         .UseConventionalRouting();
 
-    // ¼àÌı MediaProcessedEvent
-    // Catalog Service ÊÇÏû·ÑÕß£¬²»ĞèÒªÅäÖÃ Outbox£¬³ı·ÇËüÒ²Òª·¢ÏûÏ¢
 });
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 
 builder.Services.AddEndpointsApiExplorer();
 
-// 5. ×¢²á Swagger Éú³ÉÆ÷
+// 5. æ³¨å†Œ Swagger ç”Ÿæˆå™¨
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "BKMusic Catalog Service API",
         Version = "v1",
-        Description = "¸ºÔğ¹ÜÀí¸èÇúÔªÊı¾İºÍ²éÑ¯"
+        Description = "è´Ÿè´£ç®¡ç†æ­Œæ›²å…ƒæ•°æ®å’ŒæŸ¥è¯¢"
     });
 });
+
+
+
+builder.Services.AddAuthentication(options =>
+    {
+        // 1. è®¾ç½®é»˜è®¤éªŒè¯æ–¹æ¡ˆä¸º JWT
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        // 2. è®¾ç½®é»˜è®¤æŒ‘æˆ˜æ–¹æ¡ˆä¸º JWT (å¤„ç† 401)
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            // å¿…é¡»ç¡®ä¿ Catalog Service èƒ½è¯»å–åˆ°è¿™ä¸ª Key (ä» AppHost æ³¨å…¥)
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -51,27 +81,29 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
-    // ÆôÓÃ Swagger UI ÍøÒ³
+    // å¯ç”¨ Swagger UI ç½‘é¡µ
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog Service v1");
-        // ÉèÖÃÎª¿Õ£¬ÕâÑùÖ±½Ó·ÃÎÊ¸ùÂ·¾¶ http://localhost:xxxx/ ¾ÍÄÜ¿´µ½ Swagger
+        // è®¾ç½®ä¸ºç©ºï¼Œè¿™æ ·ç›´æ¥è®¿é—®æ ¹è·¯å¾„ http://localhost:xxxx/ å°±èƒ½çœ‹åˆ° Swagger
         // c.RoutePrefix = string.Empty; 
     });
 }
-// 4. È·±£½¨±í
+// 4. ç¡®ä¿å»ºè¡¨
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    db.Database.EnsureCreated();
+    //db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
-// 5. ×¢²áÂ·ÓÉ
+// 5. æ³¨å†Œè·¯ç”±
 app.MapSongEndpoints();
 app.MapPlaylistEndpoints();
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
+app.MapFavoriteEndpoints();
 
 app.MapControllers();
 

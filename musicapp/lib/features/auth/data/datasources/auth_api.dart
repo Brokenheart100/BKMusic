@@ -28,6 +28,7 @@ abstract class AuthApi {
   /// 参数说明：
   ///   @Body() - 将 LoginRequest 对象序列化为 JSON 作为请求体
   ///   request - 登录请求参数（包含用户名/手机号、密码等）
+  // ignore: unintended_html_in_doc_comment
   /// 返回值：ApiResponse<AuthResponse>
   ///   - ApiResponse：全局通用响应包装类（包含 code/message/data 等字段）
   ///   - AuthResponse：登录成功后的响应数据（包含 token、用户信息等）
@@ -40,6 +41,7 @@ abstract class AuthApi {
   /// 参数说明：
   ///   @Body() - 将 RegisterRequest 对象序列化为 JSON 作为请求体
   ///   request - 注册请求参数（包含用户名、密码、手机号、验证码等）
+  // ignore: unintended_html_in_doc_comment
   /// 返回值：ApiResponse<void>
   ///   - void 表示接口返回数据无业务实体（仅需判断是否成功）
   ///   - ApiResponse 仍包含 code/message 用于判断注册结果

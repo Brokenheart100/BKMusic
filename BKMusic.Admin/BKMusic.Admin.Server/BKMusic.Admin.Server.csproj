@@ -16,9 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BKMusic.ServiceDefaults\BKMusic.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\bkmusic.admin.client\bkmusic.admin.client.esproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
 </Project>

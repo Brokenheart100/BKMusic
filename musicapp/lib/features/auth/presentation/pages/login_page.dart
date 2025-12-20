@@ -25,6 +25,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
     );
+
     if (result != null) {
       setState(() {
         _avatarFile = File(result.files.single.path!);
@@ -239,11 +240,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     try {
       if (_isRegister) {
+        String? uploadedUrl;
+        if (_avatarFile != null) {
+          // 提示正在上传
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Uploading avatar...")));
+          uploadedUrl = await controller.uploadAvatar(_avatarFile!);
+        }
+
+        // 注册 (带上头像 URL)
         await controller.register(
             _emailController.text,
             _passwordController.text,
             _nicknameController.text,
-            null // avatarUrl 暂时传 null，后续可对接 MediaService
+            uploadedUrl // 这里传入真实的 URL
             );
 
         if (mounted) {

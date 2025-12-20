@@ -20,8 +20,8 @@ class PlayerProgressBar extends ConsumerWidget {
         onSeek: (duration) => controller.seek(duration),
 
         // 【关键修改】使用 Theme 颜色
-        baseBarColor: Colors.white.withOpacity(0.1), // 底色更淡
-        bufferedBarColor: Colors.white.withOpacity(0.3),
+        baseBarColor: Colors.white.withValues(alpha: 0.1), // 底色更淡
+        bufferedBarColor: Colors.white.withValues(alpha: 0.3),
         progressBarColor: theme.colorScheme.primary, // 使用玫红色
         thumbColor: Colors.white,
         thumbRadius: 8,
@@ -30,7 +30,7 @@ class PlayerProgressBar extends ConsumerWidget {
         // 字体样式
         timeLabelLocation: TimeLabelLocation.sides,
         timeLabelTextStyle: theme.textTheme.bodySmall?.copyWith(
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
           fontFeatures: [const FontFeature.tabularFigures()], // 等宽数字，防止跳动
         ),
       ),

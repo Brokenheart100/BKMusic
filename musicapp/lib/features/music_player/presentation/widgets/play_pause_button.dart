@@ -20,7 +20,7 @@ class PlayPauseButton extends ConsumerWidget {
           boxShadow: [
             // 霓虹发光效果
             BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.4),
+              color: theme.colorScheme.primary.withValues(alpha: 0.4),
               blurRadius: 20,
               spreadRadius: 2,
             )

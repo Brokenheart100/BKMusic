@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
@@ -26,10 +25,14 @@ class AuthInterceptor extends Interceptor {
       RequestOptions options, RequestInterceptorHandler handler) async {
     // 1. 获取本地 Token
     final token = await _tokenStorage.getAccessToken();
-
+    _logger.w(
+        "🔍 [Interceptor] 准备发送请求: ${options.path}, 本地Token存在? ${token != null}");
     // 2. 如果有 Token 且请求头没有手动设置过，则注入
     if (token != null && options.headers['Authorization'] == null) {
       options.headers['Authorization'] = 'Bearer $token';
+      _logger.w("✅ [Interceptor] Token 已注入 Header");
+    } else {
+      _logger.w("❌ [Interceptor] 未注入 Token (Token为空或已存在Header)");
     }
 
     if (options.path.contains('/auth/refresh')) {
@@ -185,7 +188,6 @@ class AuthInterceptor extends Interceptor {
     _tokenStorage.clearTokens();
     _requestQueue.clear();
     _isRefreshing = false;
-    // TODO: 这里可以发布一个全局事件总线 EventBus，或者使用 GoRouter 跳转登录页
     _logger.e("⛔ 登录已失效，请重新登录");
     super.onError(err, handler);
   }

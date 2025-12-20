@@ -34,6 +34,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 // Gateway 通常不需要 Controller，但保留也无妨
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

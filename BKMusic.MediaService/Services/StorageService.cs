@@ -41,6 +41,7 @@ public class S3StorageService : IStorageService
     public async Task EnsureBucketExistsAsync(string bucketName)
     {
         // 1. 检查桶是否存在
+        // 1. 检查桶是否存在
         var exists = await AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, bucketName);
 
         if (!exists)
@@ -48,6 +49,36 @@ public class S3StorageService : IStorageService
             _logger.LogInformation("Bucket '{BucketName}' not found. Creating it...", bucketName);
             await _s3Client.PutBucketAsync(bucketName);
             _logger.LogInformation("Bucket '{BucketName}' created successfully.", bucketName);
+        }
+
+        // ====================================================================================
+        // 【核心修复】2. 设置公开读取策略 (Public Read Policy)
+        // ====================================================================================
+        // 这段 JSON 告诉 MinIO：允许任何人 (Principal: *) 下载 (s3:GetObject) 这个桶里的文件
+        // 使用 C# 原始字符串 (""") 避免转义噩梦
+        var policyJson = """
+                         {
+                             "Version": "2012-10-17",
+                             "Statement": [
+                                 {
+                                     "Effect": "Allow",
+                                     "Principal": "*",
+                                     "Action": [ "s3:GetObject" ],
+                                     "Resource": [ "arn:aws:s3:::BUCKET_PLACEHOLDER/*" ]
+                                 }
+                             ]
+                         }
+                         """.Replace("BUCKET_PLACEHOLDER", bucketName);
+
+        try
+        {
+            await _s3Client.PutBucketPolicyAsync(bucketName, policyJson);
+            _logger.LogInformation("Public Read policy applied to bucket '{BucketName}'.", bucketName);
+        }
+        catch (Exception ex)
+        {
+            // 生产环境可能需要更严格的权限控制，这里作为开发环境警告处理
+            _logger.LogWarning(ex, "Failed to apply public policy to '{BucketName}'. Please check MinIO permissions.", bucketName);
         }
     }
 
