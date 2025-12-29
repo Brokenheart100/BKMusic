@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://你的Ngrok地址.ngrok-free.app/api/:path*"
+            "destination": "https://loathsomely-perispheric-angelita.ngrok-free.dev/api/:path*"
         },
         {
             "source": "/(.*)",
