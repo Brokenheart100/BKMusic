@@ -12,7 +12,7 @@ const logger = createConsola({
 // 1. 创建 Axios 实例
 const service = axios.create({
     // baseURL: import.meta.env.VITE_API_BASE_URL || '/',
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/',
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json',
