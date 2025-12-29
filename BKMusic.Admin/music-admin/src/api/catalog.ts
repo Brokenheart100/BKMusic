@@ -20,6 +20,10 @@ export interface CreateSongRequest {
 
 // --- API 方法 ---
 
+export const updateSongLyric = (songId: string, storageKey: string) => {
+    return request.put(`/api/songs/${songId}/lyric`, { storageKey });
+};
+
 /**
  * 获取歌曲列表
  * GET /api/songs

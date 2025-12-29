@@ -22,7 +22,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 5928305640102577697),
     name: 'SongBoxEntity',
-    lastPropertyId: const obx_int.IdUid(7, 3181102905827924041),
+    lastPropertyId: const obx_int.IdUid(8, 5771848640361277666),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -66,6 +66,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(7, 3181102905827924041),
         name: 'coverUrl',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 5771848640361277666),
+        name: 'cachedAt',
+        type: 10,
         flags: 0,
       ),
     ],
@@ -143,7 +149,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final coverUrlOffset = object.coverUrl == null
             ? null
             : fbb.writeString(object.coverUrl!);
-        fbb.startTable(8);
+        fbb.startTable(9);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, serverIdOffset);
         fbb.addOffset(2, titleOffset);
@@ -151,6 +157,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(4, albumOffset);
         fbb.addOffset(5, urlOffset);
         fbb.addOffset(6, coverUrlOffset);
+        fbb.addInt64(7, object.cachedAt.millisecondsSinceEpoch);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -181,6 +188,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final coverUrlParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 16);
+        final cachedAtParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0),
+        );
         final object = SongBoxEntity(
           id: idParam,
           serverId: serverIdParam,
@@ -189,6 +199,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           album: albumParam,
           url: urlParam,
           coverUrl: coverUrlParam,
+          cachedAt: cachedAtParam,
         );
 
         return object;
@@ -234,5 +245,10 @@ class SongBoxEntity_ {
   /// See [SongBoxEntity.coverUrl].
   static final coverUrl = obx.QueryStringProperty<SongBoxEntity>(
     _entities[0].properties[6],
+  );
+
+  /// See [SongBoxEntity.cachedAt].
+  static final cachedAt = obx.QueryDateProperty<SongBoxEntity>(
+    _entities[0].properties[7],
   );
 }

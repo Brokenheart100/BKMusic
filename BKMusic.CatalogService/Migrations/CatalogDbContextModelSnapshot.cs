@@ -90,6 +90,9 @@ namespace BKMusic.CatalogService.Migrations
                     b.Property<string>("HlsStorageKey")
                         .HasColumnType("text");
 
+                    b.Property<string>("LyricStorageKey")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 

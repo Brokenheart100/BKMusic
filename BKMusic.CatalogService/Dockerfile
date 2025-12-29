@@ -13,6 +13,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["BKMusic.CatalogService/BKMusic.CatalogService.csproj", "BKMusic.CatalogService/"]
+
+COPY ["BKMusic.ServiceDefaults/BKMusic.ServiceDefaults.csproj", "BKMusic.ServiceDefaults/"]
+
+# 注意：如果不确定是否引用了 Shared，加上这行通常也没坏处，或者你可以去 .csproj 里确认一下
+COPY ["BKMusic.Shared/BKMusic.Shared.csproj", "BKMusic.Shared/"]
+
 RUN dotnet restore "./BKMusic.CatalogService/BKMusic.CatalogService.csproj"
 COPY . .
 WORKDIR "/src/BKMusic.CatalogService"

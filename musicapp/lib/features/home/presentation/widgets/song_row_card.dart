@@ -1,7 +1,9 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:music_app/core/utils/duration_formatter.dart';
 import 'package:music_app/features/favorites/presentation/widgets/like_button.dart';
 import 'package:music_app/features/home/domain/entities/song.dart';
 import 'package:music_app/features/library/presentation/widgets/add_to_playlist_sheet.dart';
@@ -41,8 +43,6 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
 
   // 显示右键菜单
   void _showContextMenu(BuildContext context, Offset position) async {
-    final theme = Theme.of(context);
-    final renderBox = context.findRenderObject() as RenderBox;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
     // 如果是点击按钮触发，位置计算不同，这里简化为通用处理
@@ -76,6 +76,7 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
       ],
     );
 
+    if (!context.mounted) return;
     // 处理菜单点击
     if (result == 'play') {
       _play();
@@ -89,7 +90,30 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
         );
       }
     } else if (result == 'play_next') {
-      // TODO: 实现插入队列逻辑
+      final mediaItem = MediaItem(
+        id: widget.song.url,
+        title: widget.song.title,
+        artist: widget.song.artist,
+        album: widget.song.album,
+        artUri: widget.song.coverUrl != null
+            ? Uri.parse(widget.song.coverUrl!)
+            : null,
+        extras: {'songId': widget.song.id},
+      );
+
+      // 2. 调用 Controller
+      final controller = ref.read(playerControllerProvider);
+      controller.playNext(mediaItem);
+
+      // 3. 提示用户
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("${widget.song.title} will play next"),
+          behavior: SnackBarBehavior.floating,
+          width: 300,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -122,8 +146,6 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
       onExit: (_) => setState(() => _isHovering = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        // behavior: HitTestBehavior.opaque,
-        // 左键点击播放
         onTap: _play,
         // 【核心】右键点击弹出菜单
         onSecondaryTapDown: (details) {
@@ -206,10 +228,11 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
                   ),
                 ),
 
-              Text("3:45",
-                  style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 13)),
+              Text(
+                DurationFormatter.format(widget.song.duration), // 【核心修复】使用真实数据
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+              ),
               const SizedBox(width: 16),
 
               // 6. 更多操作按钮 (点击同样弹出菜单)
@@ -221,7 +244,15 @@ class _SongRowCardState extends ConsumerState<SongRowCard> {
               ),
             ],
           ),
-        ),
+        )
+            .animate(target: _isHovering ? 1 : 0) // 根据 hover 状态驱动
+            .scaleXY(
+                end: 1.02, duration: 200.ms, curve: Curves.easeOut) // 悬停微弱放大
+            .elevation(
+                end: 8, color: Colors.black.withValues(alpha: 0.3)) // 悬停增加阴影
+            // 点击时的按压效果 (Tap Effect)
+            .animate(target: widget.isPlaying ? 1 : 0)
+            .shimmer(duration: 1.seconds, delay: 2.seconds),
       ),
     );
   }

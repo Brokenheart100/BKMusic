@@ -1,7 +1,10 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:music_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:music_app/features/favorites/presentation/providers/favorites_provider.dart';
-import 'package:music_app/features/home/presentation/widgets/song_row_card.dart';
+import 'package:music_app/features/library/presentation/widgets/music_collection_view.dart';
 import 'package:music_app/features/music_player/presentation/providers/player_providers.dart';
 
 class FavoritesScreen extends ConsumerStatefulWidget {
@@ -15,7 +18,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    // 进页面时刷新 ID 缓存
+    // 刷新数据
     ref.read(favoriteIdsProvider.notifier).loadIds();
   }
 
@@ -23,47 +26,64 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   Widget build(BuildContext context) {
     final songsAsync = ref.watch(favoriteSongsProvider);
     final currentSong = ref.watch(currentSongProvider).value;
+    final currentUser = ref.watch(currentUserProvider);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text("Liked Songs"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.redAccent.withValues(alpha: 0.1), // 顶部微红
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-            stops: const [0.0, 0.3],
+    return songsAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, _) => Scaffold(body: Center(child: Text("Error: $err"))),
+      data: (songs) {
+        return MusicCollectionView(
+          title: "Liked Songs",
+          description: "Your personal collection of favorite tracks.",
+          creatorName: currentUser?.nickname ?? "You",
+
+          // 【核心】不传 coverUrl，传一个本地的爱心图标组件
+          coverUrl: null,
+          coverPlaceholder: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF450AF5), Color(0xFFC4EFDA)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Center(
+              child: Icon(Icons.favorite, size: 80, color: Colors.white),
+            ),
           ),
-        ),
-        child: songsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text("Error: $err")),
-          data: (songs) {
-            if (songs.isEmpty) {
-              return const Center(child: Text("No favorite songs yet"));
+
+          songs: songs,
+          currentSongId: currentSong?.id,
+
+          onBack: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // 如果没法退，去首页
+              context.go('/');
             }
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(24, 100, 24, 100),
-              itemCount: songs.length,
-              itemBuilder: (context, index) {
-                final song = songs[index];
-                return SongRowCard(
-                  song: song,
-                  isPlaying: currentSong?.id == song.url,
-                );
-              },
-            );
           },
-        ),
-      ),
+
+          onPlayAll: () {
+            if (songs.isEmpty) return;
+            // 播放全部逻辑
+            // 转换 Song -> MediaItem
+            final items = songs
+                .map((s) => MediaItem(
+                    id: s.url,
+                    title: s.title,
+                    artist: s.artist,
+                    album: s.album,
+                    artUri: s.coverUrl != null ? Uri.parse(s.coverUrl!) : null,
+                    extras: {'songId': s.id}))
+                .toList();
+
+            // 暂时只播第一首演示
+            ref.read(playerControllerProvider).playMediaItem(items.first);
+          },
+        );
+      },
     );
   }
 }

@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.0.2" />
-    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.0.2" />
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.0" />
+    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
@@ -26,7 +26,6 @@
   <ItemGroup>
     <ProjectReference Include="..\BKMusic.ServiceDefaults\BKMusic.ServiceDefaults.csproj" />
     <ProjectReference Include="..\BKMusic.Shared\BKMusic.Shared.csproj" />
-    <ProjectReference Include="..\BKMusic.TranscodingWorker\BKMusic.TranscodingWorker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

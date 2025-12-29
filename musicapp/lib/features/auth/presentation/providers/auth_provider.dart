@@ -11,9 +11,14 @@ import 'package:music_app/features/music_player/data/datasources/media_api.dart'
 import 'package:music_app/features/music_player/data/models/media_dto.dart';
 
 class UserProfile {
+  final String email;
   final String nickname;
   final String? avatarUrl;
-  const UserProfile({required this.nickname, this.avatarUrl});
+
+  const UserProfile(
+      {required this.email, // 必填
+      required this.nickname,
+      this.avatarUrl});
 }
 
 final currentUserProvider = StateProvider<UserProfile?>((ref) => null);
@@ -90,8 +95,9 @@ class AuthController {
       if (isLoggedIn) {
         final nickname = _storage.getNickname() ?? "User";
         final avatar = _storage.getAvatarUrl();
+        final email = _storage.getEmail() ?? "user@example.com";
         _ref.read(currentUserProvider.notifier).state =
-            UserProfile(nickname: nickname, avatarUrl: avatar);
+            UserProfile(email: email, nickname: nickname, avatarUrl: avatar);
 
         _logger.i("✅ [Auth] 用户已登录: $nickname");
       } else {
@@ -112,7 +118,18 @@ class AuthController {
       final response = await _repository.login(email, password);
 
       _ref.read(currentUserProvider.notifier).state = UserProfile(
-          nickname: response.nickname, avatarUrl: response.avatarUrl);
+          email: email, // 【新增】直接使用登录时的 email
+          nickname: response.nickname,
+          avatarUrl: response.avatarUrl);
+
+      // 2. 更新本地存储 (补全 Email)
+      await _storage.saveAuthData(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        nickname: response.nickname,
+        avatarUrl: response.avatarUrl,
+        email: email, // 【新增】传入 email
+      );
 
       _ref.read(authStateProvider.notifier).state = true;
       _logger.i("✅ [Auth] 登录成功! 欢迎回来, ${response.nickname}");

@@ -1,7 +1,11 @@
+using System.Net.Sockets;
 using Aspire.Hosting;
+using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+var compose = builder.AddDockerComposeEnvironment("BKMusic")
+    .WithDashboard(dashboard => dashboard.WithHostPort(8080));
 // ==========================================
 // 1. 基础设施层 (Infrastructure)
 // ==========================================
@@ -17,20 +21,22 @@ var rabbitmq = builder.AddRabbitMQ("messaging")
     .WithManagementPlugin();
 
 
-
 var typesenseApiKey = "xyz"; // 生产环境请使用 Secret
 var typesense = builder.AddContainer("typesense", "typesense/typesense:29.0")
-    .WithArgs("--data-dir", "/data", "--api-key","xyz" ,"--enable-cors")
+    .WithArgs("--data-dir", "/data", "--api-key", "xyz", "--enable-cors")
     .WithHttpEndpoint(port: 8108, targetPort: 8108, name: "typesense")
     .WithHttpHealthCheck("/health", statusCode: 200, endpointName: "typesense")
+    .WithExternalHttpEndpoints()
     .WithVolume("typesense-data", "/data");
 
 
 // --- PostgreSQL ---
 var postgres = builder.AddPostgres("postgres")
-    //.WithEndpoint(port: 55000, targetPort: 5432, name: "datagrip", isExternal:true,scheme:"http")
+    //.WithEndpoint( port: 8654, targetPort: 5432, name: "PQSqlPort")
+    //.WithHttpEndpoint(port:9876,targetPort:5432,name:"PgSqlPort")
     .WithDataVolume("pgsql_data")
-    .WithPgAdmin();
+    .WithPgAdmin()
+    .WithExternalHttpEndpoints();
 
 var catalogDb = postgres.AddDatabase("catalog-db");
 var mediaDb = postgres.AddDatabase("media-db");
@@ -44,6 +50,7 @@ var minio = builder.AddContainer("minio", "minio/minio")
     .WithArgs("server", "/data", "--console-address", ":9001")
     .WithEnvironment("MINIO_ROOT_USER", minioUser)
     .WithEnvironment("MINIO_ROOT_PASSWORD", minioPass)
+    .WithEnvironment("MINIO_API_CORS_ALLOW_ORIGIN", "*")
     .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "api")
     .WithHttpEndpoint(port: 9001, targetPort: 9001, name: "console")
     .WithVolume("minio-data", "/data");
@@ -63,8 +70,14 @@ var identitySvc = builder.AddProject<Projects.BKMusic_IdentityService>("identity
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
-    .WaitFor(rabbitmq)    // 等待 MQ
-    .WaitFor(identityDb); // 等待 DB
+    .WaitFor(rabbitmq)
+    .WaitFor(identityDb)
+    .PublishAsDockerFile(c =>
+    {
+        c.WithEnvironment("ASPNETCORE_URLS", "http://+:8080");
+        c.WithDockerfile(contextPath: "..", dockerfilePath: "BKMusic.IdentityService/Dockerfile");
+        c.WithEndpoint(scheme: "http", targetPort: 8080, name: "httpNx");
+    });
 
 
 
@@ -79,7 +92,11 @@ var mediaSvc = builder.AddProject<Projects.BKMusic_MediaService>("media-svc")
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(rabbitmq)
-    .WaitFor(mediaDb);
+    .WaitFor(mediaDb)
+    .PublishAsDockerFile(c =>
+    {
+        c.WithDockerfile(contextPath: "..", dockerfilePath: "BKMusic.MediaService/Dockerfile");
+    });
 
 // --- Catalog Service ---
 var catalogSvc = builder.AddProject<Projects.BKMusic_CatalogService>("catalog-svc")
@@ -92,7 +109,12 @@ var catalogSvc = builder.AddProject<Projects.BKMusic_CatalogService>("catalog-sv
     .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(rabbitmq)
     .WaitFor(catalogDb)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .PublishAsDockerFile(c =>
+    {
+        // 如果需要在代码里指定具体的 Dockerfile 路径（相对于 Context）
+        c.WithDockerfile(contextPath: "..", dockerfilePath: "BKMusic.CatalogService/Dockerfile");
+    });
 
 // --- Transcoding Worker ---
 //var worker = builder.AddProject<Projects.BKMusic_TranscodingWorker>("transcoding-worker")
@@ -111,24 +133,64 @@ builder.AddDockerfile("transcoding-worker", "..", "BKMusic.TranscodingWorker/Doc
 // 3. 网关层 (Gateway)
 // ==========================================
 
-
-
-
-
 var searchSvc = builder.AddProject<Projects.BKMusic_SearchService>("search-svc")
     .WithReference(rabbitmq)
     .WithReference(typesense.GetEndpoint("typesense"))
     .WithEnvironment("Typesense__ApiKey", typesenseApiKey)
     .WaitFor(typesense)
-    .WaitFor(rabbitmq);
+    .WaitFor(rabbitmq)
+    .PublishAsDockerFile(c =>
+    {
+        // 如果需要在代码里指定具体的 Dockerfile 路径（相对于 Context）
+        c.WithDockerfile(contextPath: "..", dockerfilePath: "BKMusic.SearchService/Dockerfile");
+    });
 
 
 var gateway = builder.AddProject<Projects.BKMusic_Gateway>("gateway")
+    .WithEndpoint(scheme: "http", port: 8765, targetPort: 8087, name: "GatewayPort")
     .WithReference(identitySvc)
     .WithReference(mediaSvc)
     .WithReference(catalogSvc)
     .WithReference(searchSvc)
-    .WithExternalHttpEndpoints();
+    .WithExternalHttpEndpoints()
+    .PublishAsDockerFile(c =>
+    {
+        // 如果需要在代码里指定具体的 Dockerfile 路径（相对于 Context）
+        c.WithDockerfile(contextPath: "..", dockerfilePath: "BKMusic.Gateway/Dockerfile");
+    });
+
+var vueapp = builder.AddJavaScriptApp("vue", "../BKMusic.Admin/music-admin")
+    .WithEnvironment("VITE_API_BASE_URL", "http://localhost:8765")
+    .WithHttpEndpoint(env: "PORT", name: "vue-admin")
+    .WithExternalHttpEndpoints()
+    .WithReference(gateway)
+    .PublishAsDockerFile();
+
+
+if (!builder.Environment.IsDevelopment())
+{
+    // 1. Nginx-Proxy: 自动反向代理
+    var nginx = builder.AddContainer("nginx-proxy", "nginxproxy/nginx-proxy", "1.9.0")
+        .WithEndpoint(80, 80, name: "http", isExternal: true) // 暴露宿主机 80
+        .WithEndpoint(443, 443, name: "https", isExternal: true) // 暴露宿主机 443
+        .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock") // 关键：监听 Docker 事件
+        .WithVolume("certs", "/etc/nginx/certs") // 存放证书
+        .WithVolume("vhost", "/etc/nginx/vhost.d")
+        .WithVolume("html", "/usr/share/nginx/html");
+
+    // 2. Acme-Companion: 自动 SSL 证书申请
+    // builder.AddContainer("nginx-proxy-acme", "nginxproxy/acme-companion", "2.4")
+    //     .WithEnvironment("DEFAULT_EMAIL", "your-email@example.com") // ⚠️ 改成你的邮箱，用于接收证书通知
+    //     .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock")
+    //     .WithVolume("certs", "/etc/nginx/certs") // 共享证书目录
+    //     .WithVolume("vhost", "/etc/nginx/vhost.d")
+    //     .WithVolume("html", "/usr/share/nginx/html")
+    //     .WithVolume("acme", "/etc/acme.sh")
+    //     .WithEnvironment("NGINX_PROXY_CONTAINER", "nginx-proxy") // 绑定上面的 nginx 容器名
+    //     .WaitFor(nginx); // 等 Nginx 启动后再启动
+}
+
+
 
 
 builder.Build().Run();

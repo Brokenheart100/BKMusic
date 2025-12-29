@@ -129,7 +129,10 @@ public static class PlaylistEndpoints
                 ? $"{minioHost}/music-covers/{s.CoverUrl}"
                 : s.CoverUrl;
 
-            return new SongEndpoints.SongDto(s.Id, s.Title, s.ArtistName, songUrl, fullCoverUrl);
+            var lyricUrl = !string.IsNullOrEmpty(s.LyricStorageKey)
+                ? $"{minioHost}/music-raw/{s.LyricStorageKey}" // 假设存放在 music-raw
+                : null;
+            return new SongEndpoints.SongDto(s.Id, s.Title, s.ArtistName,s.AlbumName, songUrl, fullCoverUrl, s.Duration,lyricUrl);
         }).ToList();
 
         return Results.Ok(Result.Success(new PlaylistDetailDto(

@@ -11,6 +11,10 @@ class LoginRequest {
   LoginRequest({required this.email, required this.password});
 
   Map<String, dynamic> toJson() => _$LoginRequestToJson(this);
+
+  // 【新增】补全 fromJson，消除 _$LoginRequestFromJson 未使用的警告
+  factory LoginRequest.fromJson(Map<String, dynamic> json) =>
+      _$LoginRequestFromJson(json);
 }
 
 // 注册请求
@@ -29,14 +33,17 @@ class RegisterRequest {
   });
 
   Map<String, dynamic> toJson() => _$RegisterRequestToJson(this);
+
+  // 【新增】补全 fromJson，消除 _$RegisterRequestFromJson 未使用的警告
+  factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
+      _$RegisterRequestFromJson(json);
 }
 
-// 认证响应 (包含 Token)
+// 认证响应
 @JsonSerializable()
 class AuthResponse {
   final String accessToken;
   final String refreshToken;
-  // 【新增】
   final String nickname;
   final String? avatarUrl;
 
@@ -49,4 +56,7 @@ class AuthResponse {
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) =>
       _$AuthResponseFromJson(json);
+
+  // 【新增】补全 toJson，消除 _$AuthResponseToJson 未使用的警告
+  Map<String, dynamic> toJson() => _$AuthResponseToJson(this);
 }

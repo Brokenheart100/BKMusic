@@ -1,14 +1,17 @@
 using BKMusic.SearchService.Dtos;
+using RabbitMQ.Client.Exceptions;
 using Typesense;
 using Typesense.Setup;
 using Wolverine;
+using Wolverine.ErrorHandling;
 using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-var typesenseUrl = builder.Configuration.GetConnectionString("typesense") ?? "http://localhost:8108";
+//var typesenseUrl = builder.Configuration.GetConnectionString("typesense");
+var typesenseUrl = builder.Configuration["services:typesense:typesense:0"];
 //1.配置 Typesense
 builder.Services.AddTypesenseClient(config =>
  {
@@ -28,6 +31,11 @@ builder.Host.UseWolverine(opts =>
     opts.UseRabbitMq(rabbitConn).AutoProvision().UseConventionalRouting();
     // 扫描 Handlers
     opts.Discovery.IncludeAssembly(typeof(Program).Assembly);
+    // 关键：添加重试，允许 Wolverine 在连接失败时等待
+    opts.Policies.OnException<BrokerUnreachableException>()
+        .RetryWithCooldown(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
+
+    //opts.Policies.UseDurableLocalQueues();  // 启用持久化本地队列
 });
 
 builder.Services.AddControllers();

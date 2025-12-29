@@ -94,13 +94,13 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     //db.Database.EnsureCreated();
-    db.Database.Migrate();
+     db.Database.Migrate();
 }
 
 // 5. 注册路由
 app.MapSongEndpoints();
 app.MapPlaylistEndpoints();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapFavoriteEndpoints();

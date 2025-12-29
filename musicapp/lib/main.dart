@@ -4,8 +4,11 @@ import 'package:music_app/app.dart'; // 确保引入了这个
 import 'package:music_app/core/di/injection.dart';
 import 'package:window_manager/window_manager.dart';
 
+//E:\Computer\CSharp\BKMusic\BKMusic.Admin\music-admin
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await configureDependencies();
   await windowManager.ensureInitialized();
 

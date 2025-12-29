@@ -61,6 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
           refreshToken: response.value!.refreshToken,
           nickname: response.value!.nickname,
           avatarUrl: response.value!.avatarUrl,
+          email: email,
         );
         // 4. 返回登录成功数据给上层
         return response.value!;

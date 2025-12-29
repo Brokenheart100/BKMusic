@@ -13,6 +13,8 @@ SongDto _$SongDtoFromJson(Map<String, dynamic> json) => SongDto(
       album: json['album'] as String? ?? 'Unknown Album',
       url: json['url'] as String,
       coverUrl: json['coverUrl'] as String?,
+      duration: (json['duration'] as num?)?.toDouble(),
+      lyricUrl: json['lyricUrl'] as String?,
     );
 
 Map<String, dynamic> _$SongDtoToJson(SongDto instance) => <String, dynamic>{
@@ -22,4 +24,6 @@ Map<String, dynamic> _$SongDtoToJson(SongDto instance) => <String, dynamic>{
       'album': instance.album,
       'url': instance.url,
       'coverUrl': instance.coverUrl,
+      'duration': instance.duration,
+      'lyricUrl': instance.lyricUrl,
     };

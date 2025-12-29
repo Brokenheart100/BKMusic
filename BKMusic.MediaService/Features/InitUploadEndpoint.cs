@@ -30,6 +30,7 @@ public static class InitUploadEndpoint
         {
             "avatar" => $"avatars/{userId}",
             "cover" => $"covers/{DateTime.UtcNow:yyyyMM}",
+            "lyrics" => $"lyrics/{DateTime.UtcNow:yyyy/MM}",
             _ => $"audio/{DateTime.UtcNow:yyyy/MM/dd}"
         };
 

@@ -7,6 +7,8 @@ class Song extends Equatable {
   final String album;
   final String url; // m3u8 地址
   final String? coverUrl;
+  final Duration duration;
+  final String? lyricUrl;
 
   const Song({
     required this.id,
@@ -15,8 +17,10 @@ class Song extends Equatable {
     required this.album,
     required this.url,
     this.coverUrl,
+    this.duration = Duration.zero,
+    this.lyricUrl,
   });
 
   @override
-  List<Object?> get props => [id, title, url];
+  List<Object?> get props => [id, title, url, lyricUrl];
 }

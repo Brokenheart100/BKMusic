@@ -1,80 +1,168 @@
-import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:music_app/core/utils/duration_formatter.dart';
 import 'package:music_app/features/home/domain/entities/song.dart';
 import 'package:music_app/features/library/presentation/widgets/add_to_playlist_sheet.dart';
-import 'package:music_app/features/music_player/presentation/providers/player_providers.dart';
-import 'package:music_app/features/music_player/presentation/widgets/album_art.dart';
 
-class SongListTile extends ConsumerWidget {
+class SongListTile extends StatefulWidget {
   final Song song;
+  final int index;
+  final VoidCallback onTap;
 
-  const SongListTile({super.key, required this.song});
+  const SongListTile({
+    super.key,
+    required this.song,
+    required this.index,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(playerControllerProvider);
-    final currentSong = ref.watch(currentSongProvider).value;
+  State<SongListTile> createState() => _SongListTileState();
+}
 
-    // 判断当前是否正在播放这首歌，如果是，高亮显示
-    // 注意：这里简单通过 URL 判断，实际项目中最好用 ID
-    final isPlaying = currentSong?.id == song.url;
+class _SongListTileState extends State<SongListTile> {
+  bool isHover = false;
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      // 1. 封面图 (复用之前的 AlbumArt 组件)
-      leading: AlbumArt(
-        url: song.coverUrl,
-        size: 50,
-        borderRadius: 6,
+  void _showContextMenu(BuildContext context, Offset position) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final relativePosition = RelativeRect.fromRect(
+      Rect.fromPoints(position, position),
+      Offset.zero & overlay.size,
+    );
+
+    final result = await showMenu<String>(
+      context: context,
+      position: relativePosition,
+      color: const Color(0xFF252529),
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
+      items: [
+        _buildMenuItem('play', Icons.play_arrow_rounded, 'Play'),
+        _buildMenuItem(
+            'add_to_playlist', Icons.playlist_add, 'Add to Playlist'),
+        const PopupMenuDivider(height: 1),
+        _buildMenuItem('download', Icons.download_rounded, 'Download'),
+      ],
+    );
 
-      // 2. 歌名
-      title: Text(
-        song.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color:
-              isPlaying ? Theme.of(context).colorScheme.primary : Colors.white,
-        ),
-      ),
-
-      // 3. 歌手 - 专辑
-      subtitle: Text(
-        "${song.artist} • ${song.album}",
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.white.withValues(alpha: 0.6), // 使用新 API
-        ),
-      ),
-
-      // 4. 更多操作按钮
-      trailing: IconButton(
-        icon: Icon(Icons.more_vert, color: Colors.white.withValues(alpha: 0.5)),
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (_) => AddToPlaylistSheet(songId: song.id),
-          );
-        },
-      ),
-
-      // 5. 点击播放
-      onTap: () {
-        // 转换 Domain Entity -> MediaItem
-        final mediaItem = MediaItem(
-          id: song.url,
-          title: song.title,
-          artist: song.artist,
-          album: song.album,
-          artUri: song.coverUrl != null ? Uri.parse(song.coverUrl!) : null,
+    if (result == 'play') {
+      widget.onTap();
+    } else if (result == 'add_to_playlist') {
+      if (context.mounted) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (_) => AddToPlaylistSheet(songId: widget.song.id),
         );
-        controller.playMediaItem(mediaItem);
-      },
+      }
+    }
+  }
+
+  PopupMenuItem<String> _buildMenuItem(
+      String value, IconData icon, String text) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 40,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.white70),
+          const SizedBox(width: 12),
+          Text(text, style: const TextStyle(fontSize: 14, color: Colors.white)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHover = true),
+      onExit: (_) => setState(() => isHover = false),
+      child: Listener(
+        onPointerDown: (event) {
+          if (event.kind == PointerDeviceKind.mouse &&
+              event.buttons == kSecondaryMouseButton) {
+            _showContextMenu(context, event.position);
+          }
+        },
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isHover
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  "#${widget.index}",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.song.coverUrl ?? "",
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.song.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        widget.song.artist,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  DurationFormatter.format(widget.song.duration),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTapDown: (details) =>
+                      _showContextMenu(context, details.globalPosition),
+                  child: Icon(
+                    Icons.more_horiz,
+                    color: isHover
+                        ? Theme.of(context).primaryColor
+                        : Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

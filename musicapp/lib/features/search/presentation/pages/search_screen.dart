@@ -117,8 +117,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         itemCount: songs.length,
                         itemBuilder: (context, index) {
                           final song = songs[index];
-                          // 【核心修复】现在 SongListTile 已经定义并引入了
-                          return SongListTile(song: song);
+                          return SongListTile(
+                            song: song,
+                            index: index,
+                            onTap: () {},
+                          );
                         },
                       );
                     },

@@ -9,5 +9,8 @@ class CreatePlaylistRequest {
 
   CreatePlaylistRequest({required this.name, this.description});
 
+  factory CreatePlaylistRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreatePlaylistRequestFromJson(json);
+
   Map<String, dynamic> toJson() => _$CreatePlaylistRequestToJson(this);
 }

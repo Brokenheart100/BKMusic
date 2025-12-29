@@ -19,6 +19,7 @@ class TokenStorage {
   static const _refreshTokenKey = 'refresh_token';
   static const _nicknameKey = 'user_nickname';
   static const _avatarKey = 'user_avatar';
+  static const _emailKey = 'user_email';
 
   Future<void> saveTokens({
     required String accessToken,
@@ -37,12 +38,14 @@ class TokenStorage {
     required String refreshToken,
     required String nickname,
     String? avatarUrl,
+    required String email,
   }) async {
     // 1. 存 Token
     await saveTokens(accessToken: accessToken, refreshToken: refreshToken);
 
     // 2. 存用户信息
     await _prefs.setString(_nicknameKey, nickname);
+    await _prefs.setString(_emailKey, email);
     if (avatarUrl != null) {
       await _prefs.setString(_avatarKey, avatarUrl);
     } else {
@@ -73,6 +76,7 @@ class TokenStorage {
 
   String? getNickname() => _prefs.getString(_nicknameKey);
   String? getAvatarUrl() => _prefs.getString(_avatarKey);
+  String? getEmail() => _prefs.getString(_emailKey);
 
   Future<void> clearTokens() async {
     _logger.i("🧹 [TokenStorage] 清理所有认证数据");

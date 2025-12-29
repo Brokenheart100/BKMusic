@@ -6,126 +6,98 @@ class HeroBanner extends StatelessWidget {
   final Song song;
   final VoidCallback onPlay;
 
-  const HeroBanner({super.key, required this.song, required this.onPlay});
+  const HeroBanner({
+    super.key,
+    required this.song,
+    required this.onPlay,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDesktop = MediaQuery.of(context).size.width > 800;
-
     return Container(
-      // 只有移动端需要 padding，桌面端靠父级布局
-      padding: isDesktop ? EdgeInsets.zero : const EdgeInsets.all(20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      height: 340,
+      margin: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        image: DecorationImage(
+          image: CachedNetworkImageProvider(song.coverUrl ?? ""),
+          fit: BoxFit.cover,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
+          )
+        ],
+      ),
+      child: Stack(
         children: [
-          // 1. 左侧大封面
-          Hero(
-            tag: 'banner_art',
-            child: Container(
-              width: isDesktop ? 300 : 160,
-              height: isDesktop ? 260 : 160,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
+          // 渐变遮罩
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.7),
                 ],
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(song.coverUrl ?? ""),
-                  fit: BoxFit.cover,
-                ),
               ),
             ),
           ),
-          const SizedBox(width: 32),
-
-          // 2. 右侧信息
-          Expanded(
+          // 文字内容
+          Positioned(
+            left: 24,
+            bottom: 24,
+            right: 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "Trending Now",
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  "Tomorrow's tunes",
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  song.title,
+                  style: const TextStyle(
                     color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit ut aliquam, purus sit amet luctus venenatis",
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "64 songs ~ 16 hrs+",
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 32),
-
-                // 按钮组
-                Row(
-                  children: [
-                    // Play All Button (金色背景)
-                    ElevatedButton.icon(
-                      onPressed: onPlay,
-                      icon: const Icon(Icons.play_circle_fill,
-                          color: Colors.black),
-                      label: const Text("Play all",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Add to Collection (半透明背景)
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.library_music,
-                          color: theme.colorScheme.primary),
-                      label: const Text("Add to collection"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.05),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Like Button
-                    IconButton(
-                      icon: const Icon(Icons.favorite, color: Colors.redAccent),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.05),
-                        padding: const EdgeInsets.all(12),
-                      ),
-                      onPressed: () {},
-                    ),
-                  ],
+                Text(
+                  song.artist,
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: onPlay,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text("Listen Now"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                )
               ],
             ),
-          ),
+          )
         ],
       ),
     );

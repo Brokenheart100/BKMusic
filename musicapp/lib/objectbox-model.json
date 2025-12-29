@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:5928305640102577697",
-      "lastPropertyId": "7:3181102905827924041",
+      "lastPropertyId": "8:5771848640361277666",
       "name": "SongBoxEntity",
       "properties": [
         {
@@ -45,6 +45,11 @@
           "id": "7:3181102905827924041",
           "name": "coverUrl",
           "type": 9
+        },
+        {
+          "id": "8:5771848640361277666",
+          "name": "cachedAt",
+          "type": 10
         }
       ],
       "relations": []

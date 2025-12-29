@@ -7,12 +7,20 @@ part 'song_dto.g.dart';
 class SongDto {
   final String id;
   final String title;
-  @JsonKey(name: 'artist') // 如果后端字段名不同，这里映射
+
+  @JsonKey(name: 'artist')
   final String artist;
+
   @JsonKey(defaultValue: 'Unknown Album')
-  final String? album; // 后端 DTO 暂时没返回 Album，给个默认值
+  final String? album;
+
   final String url;
   final String? coverUrl;
+
+  @JsonKey(name: 'duration')
+  final double? duration;
+
+  final String? lyricUrl;
 
   SongDto({
     required this.id,
@@ -21,18 +29,25 @@ class SongDto {
     this.album,
     required this.url,
     this.coverUrl,
+    this.duration,
+    this.lyricUrl,
   });
 
   factory SongDto.fromJson(Map<String, dynamic> json) =>
       _$SongDtoFromJson(json);
 
-  // DTO -> Domain Entity 转换方法
+  // 【核心修复】添加 toJson 方法，消除警告
+  Map<String, dynamic> toJson() => _$SongDtoToJson(this);
+
+  // 转换逻辑
   Song toEntity() => Song(
         id: id,
         title: title,
         artist: artist,
-        album: album ?? 'Unknown',
+        album: album ?? 'Unknown Album',
         url: url,
         coverUrl: coverUrl,
+        duration: Duration(seconds: duration?.toInt() ?? 0),
+        lyricUrl: lyricUrl,
       );
 }

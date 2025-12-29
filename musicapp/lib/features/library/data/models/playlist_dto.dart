@@ -1,9 +1,9 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:music_app/features/home/data/models/song_dto.dart'; // 引用已有的 SongDto
+import 'package:music_app/features/home/data/models/song_dto.dart';
 
 part 'playlist_dto.g.dart';
 
-// 1. 歌单列表项 (对应后端 PlaylistDto)
+// 1. 歌单列表项
 @JsonSerializable()
 class PlaylistDto {
   final String id;
@@ -20,15 +20,18 @@ class PlaylistDto {
 
   factory PlaylistDto.fromJson(Map<String, dynamic> json) =>
       _$PlaylistDtoFromJson(json);
+
+  // 【新增】补全 toJson，消除警告
+  Map<String, dynamic> toJson() => _$PlaylistDtoToJson(this);
 }
 
-// 2. 歌单详情 (对应后端 PlaylistDetailDto)
+// 2. 歌单详情
 @JsonSerializable()
 class PlaylistDetailDto {
   final String id;
   final String name;
 
-  // 详情里包含歌曲列表，复用之前的 SongDto
+  // 详情里包含歌曲列表
   final List<SongDto> songs;
 
   PlaylistDetailDto({
@@ -39,4 +42,7 @@ class PlaylistDetailDto {
 
   factory PlaylistDetailDto.fromJson(Map<String, dynamic> json) =>
       _$PlaylistDetailDtoFromJson(json);
+
+  // 【新增】补全 toJson，消除警告
+  Map<String, dynamic> toJson() => _$PlaylistDetailDtoToJson(this);
 }

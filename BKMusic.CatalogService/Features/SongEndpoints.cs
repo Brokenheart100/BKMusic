@@ -29,11 +29,31 @@ public static class SongEndpoints
             .AllowAnonymous();
 
         group.MapDelete("/{id}", DeleteSong);
+        group.MapPut("/{id}/lyric", UpdateSongLyric);
     }
     public record CreatePlaylistRequest(string Name, string? Description);
     public record PlaylistDto(Guid Id, string Name, string? CoverUrl, int SongCount);
     public record PlaylistDetailDto(Guid Id, string Name, List<SongEndpoints.SongDto> Songs);
     public record AddSongRequest(Guid SongId);
+
+    public record UpdateLyricRequest(string StorageKey);
+    private static async Task<IResult> UpdateSongLyric(
+        Guid id,
+        [FromBody] UpdateLyricRequest req,
+        CatalogDbContext db,
+        ILogger<Program> logger)
+    {
+        var song = await db.Songs.FindAsync(id);
+        if (song == null) return Results.NotFound();
+
+        // 调用领域方法
+        song.SetLyric(req.StorageKey);
+
+        await db.SaveChangesAsync();
+
+        logger.LogInformation("Updated lyric for song {SongId}, Key: {Key}", id, req.StorageKey);
+        return Results.Ok(Result.Success());
+    }
 
     private static async Task<IResult> RemoveSongFromPlaylist(
         Guid id,
@@ -125,7 +145,12 @@ public static class SongEndpoints
             // 复用之前的 URL 拼接逻辑 (建议提取为扩展方法)
             var bucket = s.HlsStorageKey?.EndsWith(".m3u8") == true ? "music-hls" : "music-raw";
             var url = $"{minioHost}/{bucket}/{s.HlsStorageKey}";
-            return new SongEndpoints.SongDto(s.Id, s.Title, s.ArtistName, url, s.CoverUrl);
+
+            var lyricUrl = !string.IsNullOrEmpty(s.LyricStorageKey)
+                ? $"{minioHost}/music-raw/{s.LyricStorageKey}" // 假设存放在 music-raw
+                : null;
+            return new SongEndpoints.SongDto(s.Id, s.Title, s.ArtistName,s.AlbumName, url, s.CoverUrl,s.Duration,lyricUrl);
+                
         }).ToList();
 
         return Results.Ok(Result.Success(new PlaylistDetailDto(playlist.Id, playlist.Name, songDtos)));
@@ -133,7 +158,16 @@ public static class SongEndpoints
 
     // DTOs
     public record CreateSongRequest(string Title, string Artist, string Album, string? CoverUrl);
-    public record SongDto(Guid Id, string Title, string Artist, string Url, string? CoverUrl);
+    public record SongDto(
+     Guid Id,
+     string Title,
+     string Artist,
+     string Album,
+     string Url,
+     string? CoverUrl,
+     double Duration,
+     string? LyricUrl // 【新增】
+ );
 
     // --- Handlers ---
 
@@ -205,13 +239,14 @@ public static class SongEndpoints
             var songUrl = $"{minioHost}/{bucketName}/{s.HlsStorageKey}";
 
 
+            var lyricUrl = !string.IsNullOrEmpty(s.LyricStorageKey)
+                ? $"{minioHost}/music-raw/{s.LyricStorageKey}" // 假设存放在 music-raw
+                : null;
+
             return new SongDto(
-                s.Id,
-                s.Title,
-                s.ArtistName,
-                  //$"{minioHost}/music-hls/{s.HlsStorageKey}", // 拼接音频 HLS 地址
-                songUrl,
-                fullCoverUrl // 使用处理后的封面地址
+                s.Id, s.Title, s.ArtistName, s.AlbumName ?? "Unknown",
+                songUrl, fullCoverUrl, s.Duration,
+                lyricUrl // 传入
             );
         });
 
@@ -230,7 +265,7 @@ public static class SongEndpoints
         // 【修正点 2】单曲详情也要处理封面 URL
         var fullCoverUrl = !string.IsNullOrEmpty(song.CoverUrl) && !song.CoverUrl.StartsWith("http")
             ? $"{minioHost}/music-covers/{song.CoverUrl}"
-            : song.CoverUrl;
+            : song.CoverUrl;    
 
         var bucketName = song.HlsStorageKey!.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
             ? "music-hls"
@@ -238,13 +273,19 @@ public static class SongEndpoints
 
         var songUrl = $"{minioHost}/{bucketName}/{song.HlsStorageKey}";
 
+        var lyricUrl = !string.IsNullOrEmpty(song.LyricStorageKey)
+            ? $"{minioHost}/music-raw/{song.LyricStorageKey}" // 假设存放在 music-raw
+            : null;
+
         return Results.Ok(Result.Success(new SongDto(
             song.Id,
             song.Title,
             song.ArtistName,
-            //hlsUrl,
+            song.AlbumName ?? "Unknown Album", // 【核心修复】补上 Album 参数
             songUrl,
-            fullCoverUrl // 使用处理后的封面地址
+            fullCoverUrl,
+            song.Duration,
+            lyricUrl
         )));
     }
 }

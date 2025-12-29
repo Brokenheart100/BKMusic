@@ -16,6 +16,7 @@ import 'package:music_app/features/music_player/data/datasources/media_api.dart'
 import 'package:music_app/features/search/data/datasources/search_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+//C:\Windows\System32\drivers\etc
 @module
 abstract class RegisterModule {
   @singleton
@@ -38,8 +39,12 @@ abstract class RegisterModule {
     final log = Logger(printer: PrettyPrinter(methodCount: 0));
     log.d("🛠️ [Dio] 开始构建网络客户端...");
 
+    const scheme = 'http';
+
     // 1. 动态判断 Gateway 地址
-    const gatewayPort = '7101';
+    // const gatewayPort = '7071';
+    const gatewayPort = '56182';
+
     String baseUrl;
 
     if (kIsWeb) {
@@ -49,7 +54,7 @@ abstract class RegisterModule {
       baseUrl = 'https://10.0.2.2:$gatewayPort/api';
       log.i("🤖 [Dio] 检测到 Android 环境，使用宿主 IP: $baseUrl");
     } else {
-      baseUrl = 'https://localhost:$gatewayPort/api';
+      baseUrl = 'http://localhost:$gatewayPort/api';
       log.i("💻 [Dio] 检测到 桌面/iOS 环境，BaseURL: $baseUrl");
     }
 

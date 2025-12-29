@@ -21,6 +21,13 @@ public class Song : Entity<Guid>
 
     private Song(Guid id) : base(id) { }
 
+    public string? LyricStorageKey { get; private set; }
+
+    public void SetLyric(string storageKey)
+    {
+        LyricStorageKey = storageKey;
+    }
+
     public static Song Create(string title, string artist, string album, string? coverUrl)
     {
         return new Song(Guid.NewGuid())

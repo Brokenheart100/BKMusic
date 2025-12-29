@@ -52,7 +52,21 @@ public static class FavoriteEndpoints
                 ? $"{minioHost}/music-covers/{s.CoverUrl}"
                 : s.CoverUrl;
 
-            return new SongEndpoints.SongDto(s.Id, s.Title, s.ArtistName, url, fullCoverUrl);
+
+            var lyricUrl = !string.IsNullOrEmpty(s.LyricStorageKey)
+                ? $"{minioHost}/music-raw/{s.LyricStorageKey}" // 假设存放在 music-raw
+                : null;
+
+            return new SongEndpoints.SongDto(
+                s.Id,
+                s.Title,
+                s.ArtistName,
+                s.AlbumName ?? "Unknown Album", // 【核心修复】补上 Album 参数
+                url,
+                fullCoverUrl,
+                s.Duration,
+                lyricUrl
+            );
         }).ToList();
 
         // 3. 【修复 CS0161】必须返回结果

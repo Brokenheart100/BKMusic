@@ -1,11 +1,13 @@
-import 'package:injectable/injectable.dart';
+import 'package:injectable/injectable.dart' hide Order; // 隐藏冲突的 Order
 import 'package:music_app/core/db/objectbox_manager.dart';
 import 'package:music_app/features/home/data/models/song_box_entity.dart';
-import 'package:music_app/objectbox.g.dart'; // 引入生成的 Box 定义
+import 'package:music_app/objectbox.g.dart';
+import 'package:objectbox/objectbox.dart' as obx; // 使用前缀
 
 abstract class MusicLocalDataSource {
   Future<List<SongBoxEntity>> getCachedSongs();
   Future<void> cacheSongs(List<SongBoxEntity> songs);
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: MusicLocalDataSource)
@@ -18,38 +20,46 @@ class MusicLocalDataSourceImpl implements MusicLocalDataSource {
 
   @override
   Future<List<SongBoxEntity>> getCachedSongs() async {
-    // getAll() 是同步的，但在 Future 中返回保持接口一致性
-    return _box.getAll();
+    // 简单查询所有，按缓存时间倒序
+    final query = _box
+        .query()
+        .order(SongBoxEntity_.cachedAt, flags: obx.Order.descending)
+        .build();
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   @override
-  Future<void> cacheSongs(List<SongBoxEntity> songs) async {
-    // 策略：由于 ID 是自增的，简单的 putMany 可能会导致重复数据
-    // 我们采用 "Smart Put"：根据 serverId 查找已存在的记录，复用其 ID
+  Future<void> cacheSongs(List<SongBoxEntity> newSongs) async {
+    // 【核心逻辑：Upsert (插入或更新)】
+    // 1. 开启事务以提高性能
+    _dbManager.store.runInTransaction(TxMode.write, () {
+      for (var newSong in newSongs) {
+        // 【核心修复】
+        // 使用 serverId (GUID字符串) 来查找，而不是 id (int)
+        // SongBoxEntity_.serverId 是生成的查询属性
+        final query = _box
+            .query(SongBoxEntity_.serverId.equals(newSong.serverId))
+            .build();
 
-    final List<SongBoxEntity> toSave = [];
+        final existing = query.findFirst();
+        query.close();
 
-    // 这里使用 Query 进行优化，或者简单粗暴一点：先清空再插入（缓存场景常用）
-    // 方案 A：清空旧缓存，插入新缓存 (最简单，适合列表刷新)
-    /*
-    _box.removeAll();
-    _box.putMany(songs);
-    */
-
-    // 方案 B：智能更新 (推荐，保留旧数据 ID)
-    for (var newSong in songs) {
-      // 查询是否存在
-      final query =
-          _box.query(SongBoxEntity_.serverId.equals(newSong.serverId)).build();
-      final existing = query.findFirst();
-      query.close();
-
-      if (existing != null) {
-        newSong.id = existing.id; // 复用 ID，这就变成了 Update 操作
+        if (existing != null) {
+          // 复用旧数据的 internal ID (int)，这样 ObjectBox 就知道是 Update
+          newSong.id = existing.id;
+        }
+        // 如果 existing 为空，newSong.id 保持为 0，ObjectBox 执行 Insert
       }
-      toSave.add(newSong);
-    }
 
-    _box.putMany(toSave);
+      // 2. 批量写入
+      _box.putMany(newSongs);
+    });
+  }
+
+  @override
+  Future<void> clearCache() async {
+    _box.removeAll();
   }
 }

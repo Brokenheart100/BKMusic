@@ -44,10 +44,7 @@ class AddToPlaylistSheet extends ConsumerWidget {
                   style: TextButton.styleFrom(
                       foregroundColor: theme.colorScheme.primary),
                   onPressed: () {
-                    // TODO: 在这里直接弹出新建对话框，建完自动添加
-                    // 简单起见，提示用户去 Library 页创建
                     Navigator.pop(context);
-                    // 可以跳转：context.go(Routes.library);
                   },
                 )
               ],
